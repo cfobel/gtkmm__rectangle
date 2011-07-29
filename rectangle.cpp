@@ -1,11 +1,13 @@
 #include <gtkmm.h>
 
-template <class T>
 class GridDrawer {
-    T &context;
+    typedef Cairo::RefPtr<Cairo::Context> context_t;
+    context_t &context;
+    int height;
+    int width;
 public:
-    GridDrawer(T &context) 
-        : context(context) {}
+    GridDrawer(context_t &context, int height, int width) 
+        : context(context), height(height), width(width) {}
 
     void draw_block(double x_from, double y_from, double x_to, double y_to) {
         context->save();
@@ -44,7 +46,7 @@ class Window : public Gtk::Window {
         height = allocation.get_height();
 
         context->scale(width, height);
-        GridDrawer<context_t> gd(context);
+        GridDrawer gd(context, width, height);
         gd.draw();
         return true;
     }
@@ -59,12 +61,26 @@ class Window : public Gtk::Window {
 
 
 int main(int argc, char* argv[]) {
-  Gtk::Main app(argc, argv);
+    Gtk::Main app(argc, argv);
 
-  Window window;
-  window.show_all();
+    Window window;
+    window.show_all();
 
-  Gtk::Main::run(window);
+    Gtk::Main::run(window);
 
-  return 0;
+    std::string filename = "image.pdf";
+    int width = 400;
+    int height = 400;
+    Cairo::RefPtr<Cairo::PdfSurface> surface = Cairo::PdfSurface::create(filename, width, height);
+
+    typedef Cairo::RefPtr<Cairo::Context> context_t;
+    context_t cr = Cairo::Context::create(surface);
+    cr->scale(width, height);
+    GridDrawer gd(cr, width, height);
+    
+    gd.draw();
+
+    cr->show_page();
+
+    return 0;
 }
