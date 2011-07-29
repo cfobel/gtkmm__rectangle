@@ -1,12 +1,11 @@
 #include <gtkmm.h>
 
-class Window : public Gtk::Window {
-  private:
-    Gtk::DrawingArea area;
-    Gtk::Allocation allocation;
-    Cairo::RefPtr<Cairo::Context> context;
-    int width;
-    int height;
+template <class T>
+class GridDrawer {
+    T &context;
+public:
+    GridDrawer(T &context) 
+        : context(context) {}
 
     void draw_block(double x_from, double y_from, double x_to, double y_to) {
         context->save();
@@ -20,6 +19,24 @@ class Window : public Gtk::Window {
         context->restore();
     }
 
+    void draw() {
+        context->save();
+        draw_block(0, 0, 0.1, 0.1);
+        draw_block(0.5, 0.5, 0.9, 0.9);
+        context->restore();
+    }
+};
+
+
+class Window : public Gtk::Window {
+  private:
+    Gtk::DrawingArea area;
+    Gtk::Allocation allocation;
+    typedef Cairo::RefPtr<Cairo::Context> context_t;
+    context_t context;
+    int width;
+    int height;
+
     bool on_area_expose(GdkEventExpose* event) {
         allocation = area.get_allocation();
         context = area.get_window()->create_cairo_context();
@@ -27,11 +44,8 @@ class Window : public Gtk::Window {
         height = allocation.get_height();
 
         context->scale(width, height);
-
-        context->save();
-        draw_block(0, 0, 0.1, 0.1);
-        draw_block(0.5, 0.5, 0.9, 0.9);
-        context->restore();
+        GridDrawer<context_t> gd(context);
+        gd.draw();
         return true;
     }
 
