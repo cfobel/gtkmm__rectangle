@@ -1,4 +1,7 @@
 #include <gtkmm.h>
+#include <iostream>
+#include <algorithm>
+using namespace std;
 
 class GridDrawer {
     typedef Cairo::RefPtr<Cairo::Context> context_t;
@@ -7,7 +10,8 @@ class GridDrawer {
     int width;
 public:
     GridDrawer(context_t &context, int height, int width) 
-        : context(context), height(height), width(width) {}
+        : context(context), height(height), width(width) {
+    }
 
     void draw_block(double x_from, double y_from, double x_to, double y_to) {
         context->save();
@@ -23,8 +27,9 @@ public:
 
     void draw() {
         context->save();
+        context->scale(width, width);
         draw_block(0, 0, 0.1, 0.1);
-        draw_block(0.5, 0.5, 0.9, 0.9);
+        draw_block(0.5, 0.5, 0.4, 0.4);
         context->restore();
     }
 };
@@ -44,13 +49,14 @@ class Window : public Gtk::Window {
         context = area.get_window()->create_cairo_context();
         width = allocation.get_width();
         height = allocation.get_height();
+        cout << "width: " << width << ", height: " << height << endl;
+        width = std::min(width, height);
+        cout << "size: " << width << endl;
 
-        context->scale(width, height);
-        GridDrawer gd(context, width, height);
+        GridDrawer gd(context, width, width);
         gd.draw();
         return true;
     }
-
   public:
     Window() : Gtk::Window() {
         area.signal_expose_event().connect(
@@ -75,7 +81,6 @@ int main(int argc, char* argv[]) {
 
     typedef Cairo::RefPtr<Cairo::Context> context_t;
     context_t cr = Cairo::Context::create(surface);
-    cr->scale(width, height);
     GridDrawer gd(cr, width, height);
     
     gd.draw();
